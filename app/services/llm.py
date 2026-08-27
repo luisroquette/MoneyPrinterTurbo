@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 import requests
 from typing import List
@@ -12,7 +13,6 @@ from app.config import config
 
 _max_retries = 5
 _DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
-_DEPRECATED_GEMINI_MODELS = {"gemini-pro", "gemini-1.0-pro"}
 MIN_SCRIPT_PARAGRAPH_NUMBER = 1
 MAX_SCRIPT_PARAGRAPH_NUMBER = 10
 MAX_SCRIPT_PROMPT_LENGTH = 2000
@@ -142,6 +142,7 @@ def _generate_response(prompt: str) -> str:
         llm_provider = config.app.get("llm_provider", "openai")
         logger.info(f"llm provider: {llm_provider}")
         api_version = ""  # for azure
+        openrouter_api_key = os.getenv("MONEYPRINTER_OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY")
         if llm_provider == "moonshot":
             api_key = config.app.get("moonshot_api_key")
             model_name = config.app.get("moonshot_model_name")
@@ -154,11 +155,11 @@ def _generate_response(prompt: str) -> str:
             if not base_url:
                 base_url = config.get_default_ollama_base_url()
         elif llm_provider == "openai":
-            api_key = config.app.get("openai_api_key")
+            api_key = openrouter_api_key
             model_name = config.app.get("openai_model_name")
-            base_url = config.app.get("openai_base_url", "")
-            if not base_url:
-                base_url = "https://api.openai.com/v1"
+            base_url = "https://openrouter.ai/api/v1"
+            if model_name and not model_name.startswith("openai/"):
+                model_name = f"openai/{model_name}"
         elif llm_provider == "aihubmix":
             api_key = config.app.get("aihubmix_api_key")
             model_name = config.app.get("aihubmix_model_name")
@@ -188,18 +189,13 @@ def _generate_response(prompt: str) -> str:
             base_url = config.app.get("azure_base_url", "")
             api_version = config.app.get("azure_api_version", "2024-02-15-preview")
         elif llm_provider == "gemini":
-            api_key = config.app.get("gemini_api_key")
+            api_key = openrouter_api_key
             model_name = config.app.get("gemini_model_name")
-            base_url = config.app.get("gemini_base_url", "")
-            # Gemini 旧模型名已经陆续下线，这里自动兼容历史配置，
-            # 避免用户沿用旧值时直接收到 404。
+            base_url = "https://openrouter.ai/api/v1"
             if not model_name:
                 model_name = _DEFAULT_GEMINI_MODEL
-            elif model_name in _DEPRECATED_GEMINI_MODELS:
-                logger.warning(
-                    f"gemini model '{model_name}' is deprecated, fallback to '{_DEFAULT_GEMINI_MODEL}'"
-                )
-                model_name = _DEFAULT_GEMINI_MODEL
+            if not model_name.startswith("google/"):
+                model_name = f"google/{model_name}"
         elif llm_provider == "grok":
             api_key = config.app.get("grok_api_key")
             model_name = config.app.get("grok_model_name")
@@ -261,11 +257,11 @@ def _generate_response(prompt: str) -> str:
             if not model_name:
                 model_name = "doubao-seed-2-1-turbo-260628"
         elif llm_provider == "deepseek":
-            api_key = config.app.get("deepseek_api_key")
+            api_key = openrouter_api_key
             model_name = config.app.get("deepseek_model_name")
-            base_url = config.app.get("deepseek_base_url")
-            if not base_url:
-                base_url = "https://api.deepseek.com"
+            base_url = "https://openrouter.ai/api/v1"
+            if model_name and not model_name.startswith("deepseek/"):
+                model_name = f"deepseek/{model_name}"
         elif llm_provider == "modelscope":
             api_key = config.app.get("modelscope_api_key")
             model_name = config.app.get("modelscope_model_name")
@@ -337,7 +333,7 @@ def _generate_response(prompt: str) -> str:
                 raise ValueError(
                     f"{llm_provider}: model_name is not set, please set it in the config.toml file."
                 )
-            if not base_url and llm_provider not in ["gemini"]:
+            if not base_url:
                 raise ValueError(
                     f"{llm_provider}: base_url is not set, please set it in the config.toml file."
                 )
@@ -365,60 +361,6 @@ def _generate_response(prompt: str) -> str:
                     )
             else:
                 raise Exception(f"[{llm_provider}] returned an empty response")
-
-        if llm_provider == "gemini":
-            import google.generativeai as genai
-
-            if not base_url:
-                genai.configure(api_key=api_key, transport="rest")
-            else:
-                genai.configure(api_key=api_key, transport="rest", client_options={'api_endpoint': base_url})
-
-            generation_config = {
-                "temperature": 0.5,
-                "top_p": 1,
-                "top_k": 1,
-                "max_output_tokens": 2048,
-            }
-
-            safety_settings = [
-                {
-                    "category": "HARM_CATEGORY_HARASSMENT",
-                    "threshold": "BLOCK_ONLY_HIGH",
-                },
-                {
-                    "category": "HARM_CATEGORY_HATE_SPEECH",
-                    "threshold": "BLOCK_ONLY_HIGH",
-                },
-                {
-                    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                    "threshold": "BLOCK_ONLY_HIGH",
-                },
-                {
-                    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                    "threshold": "BLOCK_ONLY_HIGH",
-                },
-            ]
-
-            model = genai.GenerativeModel(
-                model_name=model_name,
-                generation_config=generation_config,
-                safety_settings=safety_settings,
-            )
-
-            try:
-                response = model.generate_content(prompt)
-                candidates = response.candidates
-                generated_text = candidates[0].content.parts[0].text
-            except (AttributeError, IndexError) as e:
-                logger.warning(
-                    f"gemini returned invalid response content: {str(e)}"
-                )
-                raise ValueError(
-                    f"[{llm_provider}] returned invalid response content"
-                )
-
-            return _normalize_text_response(generated_text, llm_provider)
 
         if llm_provider == "cloudflare":
             response = requests.post(
@@ -1111,4 +1053,3 @@ if __name__ == "__main__":
     )
     print("######################")
     print(search_terms)
-

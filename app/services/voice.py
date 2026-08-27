@@ -1032,50 +1032,29 @@ def gemini_tts(
     import base64
     import io
     from pydub import AudioSegment
-    import google.generativeai as genai
     _configure_pydub_ffmpeg(AudioSegment)
     
     try:
-        # 配置Gemini API
-        api_key = config.app.get("gemini_api_key", "")
+        api_key = os.getenv("MONEYPRINTER_OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY")
         if not api_key:
-            logger.error("Gemini API key is not set")
+            logger.error("MoneyPrinter OpenRouter API key is not set")
             return None
-            
-        genai.configure(api_key=api_key)
         
         logger.info(f"start, voice name: {voice_name}, try: 1")
         
-        # 使用Gemini TTS API
-        model = genai.GenerativeModel("gemini-2.5-flash-preview-tts")
-        
-        generation_config = {
-            "response_modalities": ["AUDIO"],
-            "speech_config": {
-                "voice_config": {
-                    "prebuilt_voice_config": {
-                        "voice_name": voice_name
-                    }
-                }
-            }
-        }
-        
-        response = model.generate_content(
-            contents=text,
-            generation_config=generation_config
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "model": "google/gemini-2.5-flash-preview-tts",
+                "messages": [{"role": "user", "content": text}],
+                "modalities": ["audio"],
+                "audio": {"voice": voice_name, "format": "wav"},
+            },
+            timeout=60,
         )
-        
-        # 检查响应
-        if not response.candidates or not response.candidates[0].content:
-            logger.error("No audio content received from Gemini TTS")
-            return None
-            
-        # 获取音频数据
-        audio_data = None
-        for part in response.candidates[0].content.parts:
-            if hasattr(part, 'inline_data') and part.inline_data:
-                audio_data = part.inline_data.data
-                break
+        response.raise_for_status()
+        audio_data = response.json().get("choices", [{}])[0].get("message", {}).get("audio", {}).get("data")
                 
         if not audio_data:
             logger.error("No audio data found in response")
