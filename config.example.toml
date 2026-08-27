@@ -113,18 +113,12 @@ ollama_base_url = ""
 # Check your available models at https://ollama.com/library
 ollama_model_name = ""
 
-########## OpenAI API Key
+########## OpenAI via OpenRouter
 # OpenAI, Gemini and DeepSeek are routed through OpenRouter using
 # MONEYPRINTER_OPENROUTER_API_KEY (or OPENROUTER_API_KEY) from the environment.
-# Get your API key at https://platform.openai.com/api-keys
-# 也可以填写兼容 OpenAI Chat Completions 协议的供应商密钥，
-# 例如 OpenRouter 这类提供自定义 base_url 的平台。
+# Get your API key at https://openrouter.ai/settings/keys
 openai_api_key = ""
-# No need to set it unless you want to use your own proxy
-# 如果使用兼容 OpenAI 接口的平台，请在这里填写对应的 base_url。
-openai_base_url = ""
-# Check your available models at https://platform.openai.com/account/limits
-# 如果使用兼容供应商，请填写该平台要求的模型 ID。
+openai_base_url = "https://openrouter.ai/api/v1"
 openai_model_name = "gpt-4o-mini"
 
 ########## AIHubMix API Key
@@ -161,7 +155,7 @@ azure_base_url = ""
 azure_model_name = "gpt-35-turbo"        # replace with your model deployment name
 azure_api_version = "2024-02-15-preview"
 
-########## Gemini API Key
+########## Gemini via OpenRouter
 gemini_api_key = ""
 gemini_model_name = "gemini-2.5-flash"
 
@@ -224,10 +218,10 @@ mimo_tts_model_name = "mimo-v2.5-tts"
 # Optional natural language style prompt for MiMo TTS.
 mimo_tts_style_prompt = "请用自然、清晰、适合短视频旁白的语气朗读。"
 
-########## DeepSeek API Key
-# Visit https://platform.deepseek.com/api_keys to get your API key
+########## DeepSeek via OpenRouter
+# Uses MONEYPRINTER_OPENROUTER_API_KEY (or OPENROUTER_API_KEY).
 deepseek_api_key = ""
-deepseek_base_url = "https://api.deepseek.com"
+deepseek_base_url = "https://openrouter.ai/api/v1"
 deepseek_model_name = "deepseek-chat"
 
 
