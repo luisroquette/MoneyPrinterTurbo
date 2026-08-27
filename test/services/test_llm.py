@@ -297,6 +297,30 @@ class TestLiteLLMProvider(unittest.TestCase):
         self.assertEqual(client_mock.call_args.kwargs["base_url"], "https://openrouter.ai/api/v1")
         self.assertEqual(captured["model"], "openai/gpt-4o-mini")
 
+    def test_gemini_and_deepseek_use_exact_models_through_openrouter(self):
+        for provider, configured_model, expected_model in (
+            ("gemini", "gemini-2.5-flash", "google/gemini-2.5-flash"),
+            ("deepseek", "deepseek-v4-flash", "deepseek/deepseek-v4-flash"),
+        ):
+            with self.subTest(provider=provider):
+                config.app["llm_provider"] = provider
+                config.app[f"{provider}_model_name"] = configured_model
+                captured = {}
+                class FakeCompletions:
+                    def create(self, **kwargs):
+                        captured.update(kwargs)
+                        raise RuntimeError("stop")
+
+                client = types.SimpleNamespace(chat=types.SimpleNamespace(completions=FakeCompletions()))
+
+                with patch.dict(os.environ, {"MONEYPRINTER_OPENROUTER_API_KEY": "test-key"}), patch.object(
+                    llm, "OpenAI", return_value=client
+                ) as client_mock:
+                    llm._generate_response("test")
+
+                self.assertEqual(client_mock.call_args.kwargs["base_url"], "https://openrouter.ai/api/v1")
+                self.assertEqual(captured["model"], expected_model)
+
     def _use_qwen_provider(self):
         config.app["llm_provider"] = "qwen"
         config.app["qwen_api_key"] = "qwen-key"
