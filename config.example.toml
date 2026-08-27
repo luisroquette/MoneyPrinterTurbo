@@ -114,6 +114,8 @@ ollama_base_url = ""
 ollama_model_name = ""
 
 ########## OpenAI API Key
+# OpenAI, Gemini and DeepSeek are routed through OpenRouter using
+# MONEYPRINTER_OPENROUTER_API_KEY (or OPENROUTER_API_KEY) from the environment.
 # Get your API key at https://platform.openai.com/api-keys
 # 也可以填写兼容 OpenAI Chat Completions 协议的供应商密钥，
 # 例如 OpenRouter 这类提供自定义 base_url 的平台。

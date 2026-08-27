@@ -277,17 +277,25 @@ class TestLiteLLMProvider(unittest.TestCase):
         self.assertNotIn("mypassword", result)
         self.assertNotIn("secret-token", result)
 
-    def test_openai_provider_still_uses_existing_path(self):
+    def test_openai_provider_uses_exact_model_through_openrouter(self):
         config.app["llm_provider"] = "openai"
-        config.app["openai_api_key"] = ""
-        config.app["openai_base_url"] = "https://api.openai.com/v1"
         config.app["openai_model_name"] = "gpt-4o-mini"
 
-        result = llm._generate_response("test")
+        captured = {}
+        class FakeCompletions:
+            def create(self, **kwargs):
+                captured.update(kwargs)
+                raise RuntimeError("stop after route assertion")
+
+        fake_client = types.SimpleNamespace(chat=types.SimpleNamespace(completions=FakeCompletions()))
+        with patch.dict(os.environ, {"MONEYPRINTER_OPENROUTER_API_KEY": "test-key"}), patch.object(
+            llm, "OpenAI", return_value=fake_client
+        ) as client_mock:
+            result = llm._generate_response("test")
 
         self.assertIn("Error:", result)
-        self.assertIn("api_key is not set", result)
-        self.assertNotIn("litellm", result.lower())
+        self.assertEqual(client_mock.call_args.kwargs["base_url"], "https://openrouter.ai/api/v1")
+        self.assertEqual(captured["model"], "openai/gpt-4o-mini")
 
     def _use_qwen_provider(self):
         config.app["llm_provider"] = "qwen"

@@ -463,6 +463,7 @@ if not config.app.get("hide_config", False):
             if llm_provider == "openai":
                 if not llm_model_name:
                     llm_model_name = "gpt-3.5-turbo"
+                llm_base_url = "https://openrouter.ai/api/v1"
 
             if llm_provider == "aihubmix":
                 if not llm_model_name:
@@ -505,6 +506,7 @@ if not config.app.get("hide_config", False):
             if llm_provider == "gemini":
                 if not llm_model_name:
                     llm_model_name = "gemini-1.0-pro"
+                llm_base_url = "https://openrouter.ai/api/v1"
 
             if llm_provider == "grok":
                 if not llm_model_name:
@@ -521,8 +523,7 @@ if not config.app.get("hide_config", False):
             if llm_provider == "deepseek":
                 if not llm_model_name:
                     llm_model_name = "deepseek-chat"
-                if not llm_base_url:
-                    llm_base_url = "https://api.deepseek.com"
+                llm_base_url = "https://openrouter.ai/api/v1"
 
             if llm_provider == "mimo":
                 if not llm_model_name:

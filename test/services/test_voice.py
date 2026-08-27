@@ -8,7 +8,7 @@ import time
 from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 # add project root to python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -370,52 +370,33 @@ class TestVoiceService(unittest.TestCase):
         避免再次回退 Whisper。
         """
 
-        class _InlineData:
-            def __init__(self, data):
-                self.data = data
-
-        class _Part:
-            def __init__(self, data):
-                self.inline_data = _InlineData(data)
-
-        class _Content:
-            def __init__(self, data):
-                self.parts = [_Part(data)]
-
-        class _Candidate:
-            def __init__(self, data):
-                self.content = _Content(data)
-
-        class _Response:
-            def __init__(self, data):
-                self.candidates = [_Candidate(data)]
-
-        class _FakeModel:
-            def __init__(self, name):
-                self.name = name
-
-            def generate_content(self, contents, generation_config):
-                tone = (
-                    AudioSegment.silent(duration=1800)
-                    .set_frame_rate(24000)
-                    .set_channels(1)
-                    .set_sample_width(2)
-                )
-                return _Response(tone.raw_data)
+        tone = (
+            AudioSegment.silent(duration=1800)
+            .set_frame_rate(24000)
+            .set_channels(1)
+            .set_sample_width(2)
+        )
+        fake_response = Mock()
+        fake_response.json.return_value = {
+            "choices": [{"message": {"audio": {"data": base64.b64encode(tone.raw_data).decode()}}}]
+        }
 
         voice_file = f"{temp_dir}/tts-gemini-Zephyr.mp3"
         subtitle_file = f"{temp_dir}/tts-gemini-Zephyr.srt"
         text = "Gemini subtitle generation should work now. Testing multiple lines."
 
-        with patch("google.generativeai.configure"), patch(
-            "google.generativeai.GenerativeModel", _FakeModel
-        ), patch.object(vs.config, "app", dict(vs.config.app, gemini_api_key="test-key")):
+        with patch.dict(os.environ, {"MONEYPRINTER_OPENROUTER_API_KEY": "test-key"}), patch.object(
+            vs.requests, "post", return_value=fake_response
+        ) as post_mock:
             sub_maker = vs.gemini_tts(
                 text=text,
                 voice_name="Zephyr",
                 voice_rate=1.0,
                 voice_file=voice_file,
             )
+
+        self.assertEqual(post_mock.call_args.args[0], "https://openrouter.ai/api/v1/chat/completions")
+        self.assertEqual(post_mock.call_args.kwargs["json"]["model"], "google/gemini-2.5-flash-preview-tts")
 
         self.assertIsNotNone(sub_maker)
         self.assertEqual(
