@@ -1042,7 +1042,12 @@ def gemini_tts(
         
         response = requests.post(
             "https://openrouter.ai/api/v1/audio/speech",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://moneyprinter.ai/ai-route/tts",
+                "X-OpenRouter-Title": "moneyprinter/tts",
+            },
             json={
                 "model": "google/gemini-3.1-flash-tts-preview",
                 "input": text,

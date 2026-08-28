@@ -330,6 +330,7 @@ class TestLiteLLMProvider(unittest.TestCase):
 
         self.assertIn("Error:", result)
         self.assertEqual(client_mock.call_args.kwargs["base_url"], "https://openrouter.ai/api/v1")
+        self.assertEqual(client_mock.call_args.kwargs["default_headers"]["X-OpenRouter-Title"], "moneyprinter/llm")
         self.assertEqual(captured["model"], "openai/gpt-4o-mini")
 
     def test_openai_provider_rejects_generic_openrouter_key(self):

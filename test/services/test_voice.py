@@ -394,6 +394,7 @@ class TestVoiceService(unittest.TestCase):
             )
 
         self.assertEqual(post_mock.call_args.args[0], "https://openrouter.ai/api/v1/audio/speech")
+        self.assertEqual(post_mock.call_args.kwargs["headers"]["X-OpenRouter-Title"], "moneyprinter/tts")
         self.assertEqual(
             post_mock.call_args.kwargs["json"],
             {
