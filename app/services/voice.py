@@ -1035,7 +1035,7 @@ def gemini_tts(
     _configure_pydub_ffmpeg(AudioSegment)
     
     try:
-        api_key = os.getenv("MONEYPRINTER_OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY")
+        api_key = os.getenv("MONEYPRINTER_OPENROUTER_API_KEY")
         if not api_key:
             logger.error("MoneyPrinter OpenRouter API key is not set")
             return None

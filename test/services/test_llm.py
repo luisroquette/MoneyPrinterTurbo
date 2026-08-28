@@ -297,6 +297,18 @@ class TestLiteLLMProvider(unittest.TestCase):
         self.assertEqual(client_mock.call_args.kwargs["base_url"], "https://openrouter.ai/api/v1")
         self.assertEqual(captured["model"], "openai/gpt-4o-mini")
 
+    def test_openai_provider_rejects_generic_openrouter_key(self):
+        config.app["llm_provider"] = "openai"
+        config.app["openai_model_name"] = "gpt-4o-mini"
+
+        with patch.dict(os.environ, {"OPENROUTER_API_KEY": "generic-key"}, clear=True), patch.object(
+            llm, "OpenAI"
+        ) as client_mock:
+            result = llm._generate_response("test")
+
+        self.assertIn("api_key is not set", result)
+        client_mock.assert_not_called()
+
     def test_gemini_and_deepseek_use_exact_models_through_openrouter(self):
         for provider, configured_model, expected_model in (
             ("gemini", "gemini-2.5-flash", "google/gemini-2.5-flash"),

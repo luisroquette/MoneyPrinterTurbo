@@ -142,7 +142,7 @@ def _generate_response(prompt: str) -> str:
         llm_provider = config.app.get("llm_provider", "openai")
         logger.info(f"llm provider: {llm_provider}")
         api_version = ""  # for azure
-        openrouter_api_key = os.getenv("MONEYPRINTER_OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY")
+        openrouter_api_key = os.getenv("MONEYPRINTER_OPENROUTER_API_KEY")
         if llm_provider == "moonshot":
             api_key = config.app.get("moonshot_api_key")
             model_name = config.app.get("moonshot_model_name")
