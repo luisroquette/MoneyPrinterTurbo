@@ -9,6 +9,8 @@ services:
     ports:
       - "127.0.0.1:8501:8501"
     command: [ "streamlit", "run", "./webui/Main.py", "--server.address=0.0.0.0", "--server.port=8501", "--browser.serverAddress=127.0.0.1", "--server.enableCORS=True", "--browser.gatherUsageStats=False", "--server.showEmailPrompt=False" ]
+    environment:
+      - MONEYPRINTER_OPENROUTER_API_KEY
     volumes: *common-volumes
     restart: always
   api:
@@ -17,5 +19,7 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     command: [ "python3", "main.py" ]
+    environment:
+      - MONEYPRINTER_OPENROUTER_API_KEY
     volumes: *common-volumes
     restart: always
