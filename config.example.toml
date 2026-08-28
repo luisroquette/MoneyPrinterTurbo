@@ -157,7 +157,7 @@ azure_api_version = "2024-02-15-preview"
 
 ########## Gemini via OpenRouter
 gemini_api_key = ""
-gemini_model_name = "gemini-2.5-flash"
+gemini_model_name = "z-ai/glm-5.3-flash"
 
 ########## Grok API Key
 grok_api_key = ""
@@ -222,7 +222,7 @@ mimo_tts_style_prompt = "请用自然、清晰、适合短视频旁白的语气�
 # Uses MONEYPRINTER_OPENROUTER_API_KEY.
 deepseek_api_key = ""
 deepseek_base_url = "https://openrouter.ai/api/v1"
-deepseek_model_name = "deepseek-chat"
+deepseek_model_name = "deepseek-v4-flash-0731"
 
 
 ########## ModelScope API Key

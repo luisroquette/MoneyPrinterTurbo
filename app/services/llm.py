@@ -12,7 +12,7 @@ from openai.types.chat import ChatCompletion
 from app.config import config
 
 _max_retries = 5
-_DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+_DEFAULT_GEMINI_MODEL = "z-ai/glm-5.3-flash"
 MIN_SCRIPT_PARAGRAPH_NUMBER = 1
 MAX_SCRIPT_PARAGRAPH_NUMBER = 10
 MAX_SCRIPT_PROMPT_LENGTH = 2000
@@ -194,7 +194,7 @@ def _generate_response(prompt: str) -> str:
             base_url = "https://openrouter.ai/api/v1"
             if not model_name:
                 model_name = _DEFAULT_GEMINI_MODEL
-            if not model_name.startswith("google/"):
+            if "/" not in model_name:
                 model_name = f"google/{model_name}"
         elif llm_provider == "grok":
             api_key = config.app.get("grok_api_key")
@@ -259,6 +259,8 @@ def _generate_response(prompt: str) -> str:
         elif llm_provider == "deepseek":
             api_key = openrouter_api_key
             model_name = config.app.get("deepseek_model_name")
+            if not model_name:
+                model_name = "deepseek-v4-flash-0731"
             base_url = "https://openrouter.ai/api/v1"
             if model_name and not model_name.startswith("deepseek/"):
                 model_name = f"deepseek/{model_name}"

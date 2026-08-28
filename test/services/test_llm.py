@@ -346,8 +346,8 @@ class TestLiteLLMProvider(unittest.TestCase):
 
     def test_gemini_and_deepseek_use_exact_models_through_openrouter(self):
         for provider, configured_model, expected_model in (
-            ("gemini", "gemini-2.5-flash", "google/gemini-2.5-flash"),
-            ("deepseek", "deepseek-v4-flash", "deepseek/deepseek-v4-flash"),
+            ("gemini", "z-ai/glm-5.3-flash", "z-ai/glm-5.3-flash"),
+            ("deepseek", "deepseek-v4-flash-0731", "deepseek/deepseek-v4-flash-0731"),
         ):
             with self.subTest(provider=provider):
                 config.app["llm_provider"] = provider
