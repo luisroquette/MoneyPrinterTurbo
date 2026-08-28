@@ -377,9 +377,7 @@ class TestVoiceService(unittest.TestCase):
             .set_sample_width(2)
         )
         fake_response = Mock()
-        fake_response.json.return_value = {
-            "choices": [{"message": {"audio": {"data": base64.b64encode(tone.raw_data).decode()}}}]
-        }
+        fake_response.content = tone.raw_data
 
         voice_file = f"{temp_dir}/tts-gemini-Zephyr.mp3"
         subtitle_file = f"{temp_dir}/tts-gemini-Zephyr.srt"
@@ -395,8 +393,17 @@ class TestVoiceService(unittest.TestCase):
                 voice_file=voice_file,
             )
 
-        self.assertEqual(post_mock.call_args.args[0], "https://openrouter.ai/api/v1/chat/completions")
-        self.assertEqual(post_mock.call_args.kwargs["json"]["model"], "google/gemini-2.5-flash-preview-tts")
+        self.assertEqual(post_mock.call_args.args[0], "https://openrouter.ai/api/v1/audio/speech")
+        self.assertEqual(
+            post_mock.call_args.kwargs["json"],
+            {
+                "model": "google/gemini-3.1-flash-tts-preview",
+                "input": text,
+                "voice": "Zephyr",
+                "response_format": "pcm",
+            },
+        )
+        self.assertGreater(Path(voice_file).stat().st_size, 0)
 
         self.assertIsNotNone(sub_maker)
         self.assertEqual(

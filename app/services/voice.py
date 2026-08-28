@@ -1029,8 +1029,6 @@ def gemini_tts(
     Returns:
         SubMaker对象或None
     """
-    import base64
-    import io
     from pydub import AudioSegment
     _configure_pydub_ffmpeg(AudioSegment)
     
@@ -1043,49 +1041,31 @@ def gemini_tts(
         logger.info(f"start, voice name: {voice_name}, try: 1")
         
         response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
+            "https://openrouter.ai/api/v1/audio/speech",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             json={
-                "model": "google/gemini-2.5-flash-preview-tts",
-                "messages": [{"role": "user", "content": text}],
-                "modalities": ["audio"],
-                "audio": {"voice": voice_name, "format": "wav"},
+                "model": "google/gemini-3.1-flash-tts-preview",
+                "input": text,
+                "voice": voice_name,
+                "response_format": "pcm",
             },
             timeout=60,
         )
         response.raise_for_status()
-        audio_data = response.json().get("choices", [{}])[0].get("message", {}).get("audio", {}).get("data")
-                
-        if not audio_data:
+        audio_bytes = response.content
+
+        if not audio_bytes:
             logger.error("No audio data found in response")
             return None
-            
-        # 音频数据已经是原始字节，不需要base64解码
-        if isinstance(audio_data, str):
-            # 如果是字符串，则需要base64解码
-            audio_bytes = base64.b64decode(audio_data)
-        else:
-            # 如果已经是字节，直接使用
-            audio_bytes = audio_data
-        
-        # 尝试不同的音频格式 - Gemini可能返回不同的格式
-        audio_segment = None
-        
-        # Gemini返回Linear PCM格式，按照文档参数解析
-        try:
-            audio_segment = AudioSegment.from_file(
-                io.BytesIO(audio_bytes), 
-                format="raw",
-                frame_rate=24000,  # Gemini TTS默认采样率
-                channels=1,        # 单声道
-                sample_width=2     # 16-bit
-            )
-        except Exception as e:
-            logger.error(f"Failed to load PCM audio: {e}")
-            return None
-        
-        # 导出为MP3格式
-        audio_segment.export(voice_file, format="mp3")
+
+        audio_segment = AudioSegment(
+            data=audio_bytes,
+            sample_width=2,
+            frame_rate=24000,
+            channels=1,
+        )
+        ensure_file_path_exists(voice_file)
+        audio_segment.export(voice_file, format="mp3").close()
         
         logger.info(f"completed, output file: {voice_file}")
         
