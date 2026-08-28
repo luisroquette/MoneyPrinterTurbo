@@ -488,10 +488,13 @@ def _generate_response(prompt: str) -> str:
                 raise Exception(f"[{llm_provider}] returned an empty response")
 
         else:
-            client = OpenAI(
-                api_key=api_key,
-                base_url=base_url,
-            )
+            client_args = {"api_key": api_key, "base_url": base_url}
+            if base_url.rstrip("/") == "https://openrouter.ai/api/v1":
+                client_args["default_headers"] = {
+                    "HTTP-Referer": "https://moneyprinter.ai/ai-route/llm",
+                    "X-OpenRouter-Title": "moneyprinter/llm",
+                }
+            client = OpenAI(**client_args)
 
         response = client.chat.completions.create(
             model=model_name, messages=[{"role": "user", "content": prompt}]
