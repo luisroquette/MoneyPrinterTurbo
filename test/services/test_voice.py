@@ -412,6 +412,15 @@ class TestVoiceService(unittest.TestCase):
         self.assertIn("Gemini subtitle generation should work now", subtitle_content)
         self.assertIn("Testing multiple lines", subtitle_content)
 
+    def test_gemini_tts_rejects_generic_openrouter_key(self):
+        with patch.dict(os.environ, {"OPENROUTER_API_KEY": "generic-key"}, clear=True), patch.object(
+            vs.requests, "post"
+        ) as post_mock:
+            result = vs.gemini_tts("test", "Zephyr", 1.0, f"{temp_dir}/unused.mp3")
+
+        self.assertIsNone(result)
+        post_mock.assert_not_called()
+
     def test_mimo_tts_uses_openai_compatible_audio_response(self):
         """
         验证 Xiaomi MiMo TTS 可以消费 OpenAI-compatible 的音频响应结构。
