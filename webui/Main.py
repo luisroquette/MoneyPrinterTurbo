@@ -415,9 +415,9 @@ if not config.app.get("hide_config", False):
                 provider_id: get_llm_provider_label(provider_id, label)
                 for label, provider_id in llm_provider_options
             }
-            saved_llm_provider = config.app.get("llm_provider", "moonshot").lower()
+            saved_llm_provider = config.app.get("llm_provider", "deepseek").lower()
             if saved_llm_provider not in llm_provider_ids:
-                saved_llm_provider = "moonshot"
+                saved_llm_provider = "deepseek"
 
             # Streamlit 会把没有 key 的 selectbox 视为一个由 label/options/index
             # 共同决定的临时控件。如果每次选择后都根据 config.app 重新计算 index，
