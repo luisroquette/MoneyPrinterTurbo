@@ -505,7 +505,7 @@ if not config.app.get("hide_config", False):
 
             if llm_provider == "gemini":
                 if not llm_model_name:
-                    llm_model_name = "gemini-1.0-pro"
+                    llm_model_name = "z-ai/glm-5.3-flash"
                 llm_base_url = "https://openrouter.ai/api/v1"
 
             if llm_provider == "grok":
@@ -522,7 +522,7 @@ if not config.app.get("hide_config", False):
 
             if llm_provider == "deepseek":
                 if not llm_model_name:
-                    llm_model_name = "deepseek-chat"
+                    llm_model_name = "deepseek-v4-flash-0731"
                 llm_base_url = "https://openrouter.ai/api/v1"
 
             if llm_provider == "mimo":
