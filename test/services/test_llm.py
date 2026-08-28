@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import tempfile
@@ -23,6 +24,29 @@ RUN_INTEGRATION_TESTS = os.environ.get("MPT_RUN_INTEGRATION_TESTS", "").lower() 
 
 
 class TestScriptPromptOptions(unittest.TestCase):
+    def test_openrouter_copy_requires_the_dedicated_moneyprinter_key(self):
+        root = Path(__file__).parent.parent.parent
+        provider_keys = (
+            "llm_provider_tips.openai",
+            "llm_provider_tips.gemini",
+            "llm_provider_tips.deepseek",
+        )
+
+        for locale in ("en", "ru", "zh"):
+            messages = json.loads(
+                (root / "webui" / "i18n" / f"{locale}.json").read_text(
+                    encoding="utf-8"
+                )
+            )["Translation"]
+            with self.subTest(locale=locale):
+                for key in provider_keys:
+                    self.assertIn("MONEYPRINTER_OPENROUTER_API_KEY", messages[key])
+                    self.assertNotIn("`OPENROUTER_API_KEY`", messages[key])
+
+                tts_tip = messages["tts_provider_tips.gemini"]
+                self.assertIn("MONEYPRINTER_OPENROUTER_API_KEY", tts_tip)
+                self.assertIn("google/gemini-3.1-flash-tts-preview", tts_tip)
+
     def test_versioned_config_defaults_to_deepseek_openrouter(self):
         config_path = Path(__file__).parent.parent.parent / "config.example.toml"
         versioned_config = tomllib.loads(config_path.read_text(encoding="utf-8"))

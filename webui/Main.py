@@ -916,7 +916,7 @@ with middle_panel:
             ("azure-tts-v1", "Azure TTS V1"),
             ("azure-tts-v2", "Azure TTS V2"),
             ("siliconflow", "SiliconFlow TTS"),
-            ("gemini-tts", "Google Gemini TTS"),
+            ("gemini-tts", "Gemini TTS via OpenRouter"),
             ("mimo-tts", "Xiaomi MiMo TTS"),
             ("elevenlabs", "ElevenLabs TTS"),
             ("chatterbox", "Chatterbox TTS"),
@@ -1148,6 +1148,13 @@ with middle_panel:
                 st.info(tips)
 
             config.siliconflow["api_key"] = siliconflow_api_key
+
+        if selected_tts_server == "gemini-tts" or (
+            voice_name and voice.is_gemini_voice(voice_name)
+        ):
+            tips = get_tts_provider_tips("gemini")
+            if tips:
+                st.info(tips)
 
         # 当选择 Xiaomi MiMo TTS 时，复用 MiMo LLM provider 的 API Key。
         # 这样用户如果同时使用 MiMo 生成文案和语音，只需要维护一份密钥。
