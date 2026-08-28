@@ -139,7 +139,7 @@ def _extract_qwen_generation_text(response) -> str:
 def _generate_response(prompt: str) -> str:
     try:
         content = ""
-        llm_provider = config.app.get("llm_provider", "openai")
+        llm_provider = config.app.get("llm_provider", "deepseek")
         logger.info(f"llm provider: {llm_provider}")
         api_version = ""  # for azure
         openrouter_api_key = os.getenv("MONEYPRINTER_OPENROUTER_API_KEY")

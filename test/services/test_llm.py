@@ -1,6 +1,7 @@
 import os
 import sys
 import tempfile
+import tomllib
 import types
 import unittest
 from pathlib import Path
@@ -22,6 +23,16 @@ RUN_INTEGRATION_TESTS = os.environ.get("MPT_RUN_INTEGRATION_TESTS", "").lower() 
 
 
 class TestScriptPromptOptions(unittest.TestCase):
+    def test_versioned_config_defaults_to_deepseek_openrouter(self):
+        config_path = Path(__file__).parent.parent.parent / "config.example.toml"
+        versioned_config = tomllib.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(versioned_config["app"]["llm_provider"], "deepseek")
+        self.assertEqual(
+            versioned_config["app"]["deepseek_base_url"],
+            "https://openrouter.ai/api/v1",
+        )
+
     def test_normalize_text_response_removes_think_blocks(self):
         """
         reasoning 模型可能返回 `<think>...</think>`。脚本生成链路必须只保留
