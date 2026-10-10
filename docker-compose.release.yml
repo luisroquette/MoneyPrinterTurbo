@@ -11,6 +11,8 @@ services:
     command: [ "streamlit", "run", "./webui/Main.py", "--server.address=0.0.0.0", "--server.port=8501", "--browser.serverAddress=127.0.0.1", "--server.enableCORS=True", "--browser.gatherUsageStats=False", "--server.showEmailPrompt=False" ]
     environment:
       - MONEYPRINTER_OPENROUTER_API_KEY
+      - OPENROUTER_JEV_PERCENT
+      - OPENROUTER_JEV_COST_TIER
     volumes: *common-volumes
     restart: always
   api:
@@ -21,5 +23,7 @@ services:
     command: [ "python3", "main.py" ]
     environment:
       - MONEYPRINTER_OPENROUTER_API_KEY
+      - OPENROUTER_JEV_PERCENT
+      - OPENROUTER_JEV_COST_TIER
     volumes: *common-volumes
     restart: always

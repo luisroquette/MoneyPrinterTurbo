@@ -24,6 +24,15 @@ RUN_INTEGRATION_TESTS = os.environ.get("MPT_RUN_INTEGRATION_TESTS", "").lower() 
 
 
 class TestScriptPromptOptions(unittest.TestCase):
+    def test_docker_services_receive_jev_rollout_configuration(self):
+        root = Path(__file__).parent.parent.parent
+
+        for compose_file in ("docker-compose.yml", "docker-compose.release.yml"):
+            compose = (root / compose_file).read_text(encoding="utf-8")
+            with self.subTest(compose_file=compose_file):
+                self.assertEqual(compose.count("- OPENROUTER_JEV_PERCENT"), 2)
+                self.assertEqual(compose.count("- OPENROUTER_JEV_COST_TIER"), 2)
+
     def test_jev_routes_before_the_configured_provider(self):
         response = types.SimpleNamespace(
             raise_for_status=lambda: None,
