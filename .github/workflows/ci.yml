@@ -43,4 +43,4 @@ jobs:
         run: uv run python scripts/check_retired_claude_models.py
 
       - name: Run deterministic unit tests
-        run: uv run python -X utf8 -m unittest test.services.test_state test.services.test_task test.services.test_schema test.services.test_webui_i18n
+        run: uv run python -X utf8 -m unittest test.services.test_state test.services.test_task test.services.test_schema test.services.test_webui_i18n test.services.test_llm
