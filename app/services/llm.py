@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+import secrets
 import requests
 from typing import List
 
@@ -136,7 +137,7 @@ def _extract_qwen_generation_text(response) -> str:
     return _normalize_text_response(text, "qwen")
 
 
-def _generate_response(prompt: str) -> str:
+def _generate_response_fixed(prompt: str) -> str:
     try:
         content = ""
         llm_provider = config.app.get("llm_provider", "deepseek")
@@ -515,6 +516,45 @@ def _generate_response(prompt: str) -> str:
         return _normalize_text_response(content, llm_provider)
     except Exception as e:
         return f"Error: {_sanitize_error_message(e)}"
+
+
+def _generate_response(prompt: str) -> str:
+    raw_percent = os.getenv("OPENROUTER_JEV_PERCENT", "").strip()
+    if not raw_percent:
+        return _generate_response_fixed(prompt)
+    try:
+        percent = float(raw_percent)
+    except ValueError as exc:
+        raise ValueError("OPENROUTER_JEV_PERCENT must be between 0 and 100") from exc
+    if not 0 <= percent <= 100:
+        raise ValueError("OPENROUTER_JEV_PERCENT must be between 0 and 100")
+    if secrets.randbelow(10_000) >= round(percent * 100):
+        return _generate_response_fixed(prompt)
+
+    api_key = os.getenv("MONEYPRINTER_OPENROUTER_API_KEY")
+    if not api_key:
+        return _generate_response_fixed(prompt)
+    tier = os.getenv("OPENROUTER_JEV_COST_TIER", "low").strip() or "low"
+    if tier not in {"low", "medium", "high"}:
+        raise ValueError("OPENROUTER_JEV_COST_TIER must be low, medium, or high")
+    try:
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "model": "typesafe/jev-router",
+                "plugins": [{"id": "jev-router", "cost_tier": tier}],
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=120,
+        )
+        response.raise_for_status()
+        data = response.json()
+        content = data.get("choices", [{}])[0].get("message", {}).get("content")
+        return _normalize_text_response(content, "jev-router")
+    except Exception as exc:
+        logger.warning(f"Jev Router unavailable, using configured provider: {_sanitize_error_message(exc)}")
+        return _generate_response_fixed(prompt)
 
 
 def _limit_script_text(text: str | None, max_length: int, field_name: str) -> str:
