@@ -24,6 +24,27 @@ RUN_INTEGRATION_TESTS = os.environ.get("MPT_RUN_INTEGRATION_TESTS", "").lower() 
 
 
 class TestScriptPromptOptions(unittest.TestCase):
+    def test_jev_routes_before_the_configured_provider(self):
+        response = types.SimpleNamespace(
+            raise_for_status=lambda: None,
+            json=lambda: {"choices": [{"message": {"content": "Jev answer"}}]},
+        )
+        with patch.dict(
+            os.environ,
+            {
+                "MONEYPRINTER_OPENROUTER_API_KEY": "test-key",
+                "OPENROUTER_JEV_PERCENT": "100",
+                "OPENROUTER_JEV_COST_TIER": "low",
+            },
+        ), patch.object(llm.requests, "post", return_value=response) as post, patch.object(
+            llm, "_generate_response_fixed", side_effect=AssertionError("fallback should not run")
+        ):
+            self.assertEqual(llm._generate_response("hello"), "Jev answer")
+
+        payload = post.call_args.kwargs["json"]
+        self.assertEqual(payload["model"], "typesafe/jev-router")
+        self.assertEqual(payload["plugins"], [{"id": "jev-router", "cost_tier": "low"}])
+
     def test_openrouter_copy_requires_the_dedicated_moneyprinter_key(self):
         root = Path(__file__).parent.parent.parent
         provider_keys = (
